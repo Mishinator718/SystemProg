@@ -1,1 +1,1 @@
-echo "Hello vse"
+echo "Hello ne vse"
