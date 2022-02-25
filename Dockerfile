@@ -1,2 +1,3 @@
 FROM centos:latest
-COPY script.sh /
+COPY script.sh /home
+RUN chmod +x home/script.sh
