@@ -1,3 +1,5 @@
 FROM centos:latest
-COPY script.sh /home
-RUN chmod +x home/script.sh
+COPY lab2.S /home
+RUN yum -y install gcc
+RUN dnf --enablerepo=powertools install nasm
+RUN chmod +x home/lab2.S 
