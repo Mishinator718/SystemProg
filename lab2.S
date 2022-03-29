@@ -1,49 +1,71 @@
-DEFAULT REL
+.data
 
-section .rodata
-Hello: db "Hello world",10
-len_Hello: equ $-Hello
+print_n:
+.string "\n"
 
-section .text
-global _start
+print_format:
+.string "%d "
 
-   _start:
-        push    rbp
-        mov     rbp, rsp
-        mov     dword [rbp - 4], 0
-        mov     dword [rbp - 52], 1
-        mov     dword [rbp - 56], 0
-.LBB0_1:
-        cmp     dword [rbp - 56], 10
-        jge     .LBB0_6
-        movsxd  rax, dword [rbp - 56]
-        mov     eax, dword [rbp + 4*rax - 48]
-        and     eax, dword [rbp - 52]
-        cmp     eax, 0
-        je      .LBB0_4
-        movsxd  rax, dword [rbp - 56]
-        mov     ecx, dword [rbp + 4*rax - 48]
-        sar     ecx, 1
-        movsxd  rax, dword [rbp - 56]
-        mov     dword [rbp + 4*rax - 48], ecx
-.LBB0_4:
-        xor rax, rax
-	xor rdi, rdi
-        mov rax, 1
-	mov rdi, 1
-	mov ebx, dword [rbp - 56]
-	xor rsi, rsi
-	mov esi, dword [rbp + 4*rbx - 48]
-	mov rdx, 4
-	syscall
-        jmp     .LBB0_5
-.LBB0_5:
-        mov     eax, dword [rbp - 56]
-        add     eax, 1
-        mov     dword [rbp - 56], eax
-        jmp     .LBB0_1
-.LBB0_6:
+print_summ:
+.string "%d\n"
 
-        mov eax, 60
-        xor edi, edi
-        syscall
+
+/* наш массив */
+arr:
+        .long 1, 2, 3, 64, 65, 126, 7, 8
+arr_end:
+
+
+.text
+.globl main
+.type main, @function
+
+main:
+	movl $arr, %ebx  /* в ebx, ложим наш массив */
+	movl $0, %ecx /* в регистре %ecx храним значение суммы, пока что поместим туда число 0 */
+	movl (%ebx), %eax
+jmp bound /* безусловный переход к функции bound  */
+
+start:
+        xor $64, %eax /*в 3 строчках идет проверка, нет ли в нашем числе, в двоичной системе 1101110, находятся ли на таких же элементах нули */
+        and $64, %eax
+        cmpl $64, %eax
+        je next_element /* если не находится, идем в функцию next_element */
+
+	movl (%ebx), %eax /* в %eax помещаем первый элемент массива (который лежит в регистре %ebx) */
+        shr $1, %eax  /* логически сдвигаем влево значение, которое находится в регистре %eax */
+        movl %eax, (%ebx) /* в %ebx помещаем обнолвенное значение %eax, соответственно мы заменили значение четного элемента в массиве */
+
+next_element:
+	addl (%ebx), %ecx /* увеличиваем значение суммы */
+
+	addl $4, %ebx /* переходим к адресу след эл-та массива; */
+	movl (%ebx), %eax
+
+bound:
+        cmpl $arr_end, %ebx /* сравнить адрес текущего элемента массива и адрес конца массива*/
+        jne start /* если не равны, то переходим снова к функции search_max*/
+
+print_sum:
+        push %ecx /* кладем в стек значение регистра %eсx */
+        push $print_summ /* кладем в стек функцию print_sum */
+        call printf /* передаем управление системной функции printf */
+        addl $8, %esp /* очищаем регистр, который отвечает за стек */
+
+movl $arr, %ebx  /* в ebx, ложим наш массив, так как нам нужно вернуться в адрес памяти, содержащий значение первого элемента массива, мы же уже перебрали весь массив, значит нужно назад вернуться, инчае фигня будет */
+print_mass:
+        push (%ebx)  /* кладем в стек значение регистра %ebx */
+        push $print_format /* кладем в стек функцию  print_format */
+        call printf  /* передаем управление системной функции printf */
+        addl $8, %esp /* очищаем регистр, который отвечает за стек */
+
+        addl $4, %ebx /* переходим к адресу следующего элемента массива */
+        cmpl $arr_end, %ebx /* сравнить адрес текущего элемента массива и адрес конца массива*/
+        jne print_mass /* если адрес текущего элемента массива != адрес конца массива, то переходим в функцию print_arr*/
+
+
+print:
+        push $print_n /* кладем в стек функцию print */
+        call printf /* передаем управление системной функции printf */
+        addl $4, %esp /* очищаем регистр, который отвечает за стек */
+        ret /* возвращаем управление себе, и конец программы */
